@@ -3,82 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Trading Terminal</title>
+    <title>Minimal Trading Terminal</title>
     <style>
-        /* Reset margins to allow edge-to-edge layout */
+        /* Base layout */
         body, html {
             margin: 0;
             padding: 0;
             height: 100vh;
             width: 100vw;
-            background-color: #131722; /* TradingView dark theme background */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden; /* Prevents scrollbars */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
+            font-family: sans-serif;
         }
 
-        /* Chart section: takes up exactly 90% of the viewport height */
+        /* 90% Edge-to-Edge Chart */
         .chart-container {
             height: 90vh;
             width: 100vw;
-            background-color: #1e222d;
-            border-bottom: 2px solid #000000;
         }
 
-        /* Button section: takes up the remaining 10% */
+        /* 10% Single-Line Grid */
         .controls-container {
             height: 10vh;
             width: 100vw;
             display: grid;
-            /* Forces all child elements into a single horizontal line with equal widths */
             grid-auto-flow: column;
             grid-auto-columns: 1fr;
-            gap: 4px; /* Space between buttons */
-            padding: 4px;
-            box-sizing: border-box;
-            background-color: #131722;
         }
 
-        /* Uniform button styling */
-        button {
-            background-color: #2a2e39;
-            color: #d1d4dc;
-            border: none;
-            border-radius: 4px;
-            /* clamp() ensures text shrinks on small screens but doesn't get too large on big monitors */
-            font-size: clamp(10px, 1.5vw, 16px);
-            font-weight: 600;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
+        /* Plain table-grid styling for all items */
+        .controls-container > * {
+            border: 1px solid black;
+            background: white;
+            color: black;
+            font-size: clamp(10px, 1.2vw, 14px);
+            text-align: center;
+            box-sizing: border-box;
+            margin-left: -1px; /* Collapses borders together like a real table */
+            margin-top: -1px;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 0;
         }
 
-        button:hover {
-            background-color: #363c4e;
+        .controls-container > button {
+            cursor: pointer;
         }
-
-        /* Specific colors for execution buttons */
-        .buy { 
-            background-color: #26a69a; 
-            color: white; 
-        }
-        .buy:hover { background-color: #22968b; }
         
-        .sell { 
-            background-color: #ef5350; 
-            color: white; 
+        .controls-container > input {
+            cursor: text;
         }
-        .sell:hover { background-color: #d84b48; }
-
     </style>
 </head>
 <body>
 
-    <!-- 90% Edge-to-Edge Chart Area -->
     <div class="chart-container">
         <div class="tradingview-widget-container" style="height:100%;width:100%">
           <div id="tv_chart" style="height:100%;width:100%"></div>
@@ -89,13 +69,12 @@
               "symbol": "BINANCE:BTCUSDT",
               "interval": "15",
               "timezone": "Etc/UTC",
-              "theme": "dark",
+              "theme": "light",
               "style": "1",
               "locale": "en",
               "enable_publishing": false,
-              "backgroundColor": "#1e222d",
-              "hide_top_toolbar": false,
-              "hide_legend": false,
+              "hide_top_toolbar": true,    /* Hides the top options */
+              "hide_legend": true,         /* Hides the on-chart legend */
               "save_image": false,
               "container_id": "tv_chart"
           });
@@ -103,14 +82,18 @@
         </div>
     </div>
 
-    <!-- 10% Single-Line Grid Button Area -->
     <div class="controls-container">
-        <button class="buy">Buy Market</button>
-        <button class="sell">Sell Market</button>
-        <button>Close All</button>
-        <button>Reverse Position</button>
-        <button>Order Book</button>
-        <button>Settings</button>
+        <!-- Replaced Chart Options -->
+        <input type="text" value="BTCUSDT" title="Symbol" />
+        <button>15m</button>
+        <button>1H</button>
+        <button>1D</button>
+        <button>Indicators</button>
+        
+        <!-- Action Buttons -->
+        <button>Buy Market</button>
+        <button>Sell Market</button>
+        <button>Close</button>
     </div>
 
 </body>
