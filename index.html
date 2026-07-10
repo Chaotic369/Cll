@@ -3,118 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Dock Terminal</title>
+    <title>Trading Dashboard (Dock UI)</title>
     <style>
-        /* Base layout */
+        :root {
+            --bg-color: #000000;
+            --card-bg: #0d1117;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --label-color: #8b949e;
+            --accent-blue: #58a6ff;
+            --buy-color: #238636;
+            --sell-color: #da3633;
+        }
+
         body, html {
             margin: 0;
             padding: 0;
             height: 100vh;
             width: 100vw;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            font-family: sans-serif;
-            background: white;
         }
 
-        /* 90% Edge-to-Edge Chart */
+        /* 90% Chart Area */
         .chart-container {
             height: 90vh;
             width: 100vw;
+            position: relative;
+            background: var(--bg-color);
         }
 
-        /* 10% Bottom Area to hold the taskbar */
+        #miniChart {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Floating Info Overlay (Replaces the top header) */
+        .chart-info-overlay {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            text-align: right;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .header-title { font-size: 14px; font-weight: 600; color: var(--text-color); opacity: 0.8; }
+        #live-price { color: var(--buy-color); font-size: 24px; font-family: monospace; font-weight: bold; margin-top: 4px; }
+
+        /* Floating Trades on left */
+        .floating-trades {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .trade-card {
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(4px);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            border: 1px solid var(--border-color);
+            pointer-events: auto;
+            min-width: 150px;
+        }
+
+        .on-chart-trade {
+            position: absolute;
+            background: rgba(13, 17, 23, 0.7);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+            transform: translateY(-50%);
+            margin-left: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-close {
+            background: transparent; border: none; color: var(--sell-color); cursor: pointer; padding: 2px 4px; font-size: 12px; font-weight: bold;
+        }
+
+        /* 10% Bottom Area */
         .bottom-area {
             height: 10vh;
             width: 100vw;
             display: flex;
-            justify-content: center; /* Centers the taskbar horizontally */
-            align-items: center;     /* Centers the taskbar vertically */
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-color);
         }
 
-        /* iPad / Mac Taskbar (Dock) styling */
+        /* The Dock / Taskbar */
         .controls-container {
             display: grid;
             grid-auto-flow: column;
-            border: 1px solid black;
-            border-radius: 16px; /* Gives the Mac dock rounded edges */
-            overflow: hidden;    /* Clips the internal buttons to the rounded corners */
-            height: 60%;         /* Makes the bar slightly smaller than the 10vh area */
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            height: 65%;
+            background: var(--card-bg);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* Plain table-grid styling for items inside the dock */
-        .controls-container > * {
+        /* Individual cells in the dock grid */
+        .dock-item {
             border: none;
-            border-right: 1px solid black; /* Creates the table grid lines between buttons */
-            background: white;
-            color: black;
-            font-size: clamp(10px, 1.2vw, 14px);
-            text-align: center;
-            box-sizing: border-box;
+            border-right: 1px solid var(--border-color);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0 1.5vw; /* Spaces the buttons out based on screen size */
-            outline: none;
+            padding: 0 16px;
+            min-width: 70px;
+            transition: background 0.2s;
         }
 
-        /* Remove the grid line on the very last button to keep the outer border clean */
         .controls-container > *:last-child {
             border-right: none;
         }
 
-        .controls-container > button {
+        /* Labels and Inputs seamlessly styled inside the dock */
+        .dock-label {
+            color: var(--label-color);
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 2px;
+            pointer-events: none;
+        }
+
+        .dock-input {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            outline: none;
             cursor: pointer;
+            -moz-appearance: textfield;
         }
-        
-        .controls-container > input {
-            cursor: text;
-            width: 80px;
+
+        /* Remove arrows from number inputs */
+        .dock-input::-webkit-outer-spin-button,
+        .dock-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
+
+        .dock-input option {
+            background: var(--card-bg);
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            width: 100%;
+            height: 100%;
+            transition: 0.1s;
+        }
+
+        .btn-action:hover { background: rgba(255,255,255,0.05); }
+        .btn-action:active { background: rgba(255,255,255,0.1); }
+        .btn-buy { color: var(--buy-color); }
+        .btn-sell { color: var(--sell-color); }
+
+        /* Specific interactive items */
+        .balance-item { cursor: pointer; }
+        .balance-item:hover { background: rgba(255,255,255,0.05); }
+        #accBalance { color: var(--accent-blue); font-size: 13px; font-weight: bold; }
+
     </style>
 </head>
 <body>
 
-    <div class="chart-container">
-        <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div id="tv_chart" style="height:100%;width:100%"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-          <script type="text/javascript">
-          new TradingView.widget({
-              "autosize": true,
-              "symbol": "BINANCE:BTCUSDT",
-              "interval": "15",
-              "timezone": "Etc/UTC",
-              "theme": "light",
-              "style": "1",
-              "locale": "en",
-              "enable_publishing": false,
-              "hide_top_toolbar": true,    /* Hides the top options */
-              "hide_legend": true,         /* Hides the on-chart legend */
-              "save_image": false,
-              "container_id": "tv_chart"
-          });
-          </script>
-        </div>
+<div class="chart-container" id="chart-wrapper">
+    <!-- Header overlay moved into chart area -->
+    <div class="chart-info-overlay">
+        <div class="header-title">Gold (XAU/USD)</div>
+        <div id="live-price">Connecting...</div>
     </div>
 
-    <!-- Bottom area with centered dock -->
-    <div class="bottom-area">
-        <div class="controls-container">
-            <!-- Replaced Chart Options -->
-            <input type="text" value="BTCUSDT" title="Symbol" />
-            <button>15m</button>
-            <button>1H</button>
-            <button>1D</button>
-            <button>Indicators</button>
-            
-            <!-- Action Buttons -->
-            <button>Buy Market</button>
-            <button>Sell Market</button>
-            <button>Close</button>
-        </div>
-    </div>
+    <!-- Floating trades -->
+    <div id="activeTradesContainer" class="floating-trades"></div>
+    
+    <!-- Canvas Chart -->
+    <canvas id="miniChart"></canvas>
+</div>
 
+<!-- Bottom Dock UI -->
+<div class="bottom-area">
+    <div class="controls-container">
+        
+        <div class="dock-item balance-item" onclick="toggleAccount()" title="Toggle Real/Demo">
+            <span class="dock-label">Balance</span>
+            <span id="accBalance">--</span>
+        </div>
+
+        <div class="dock-item">
+            <span class="dock-label">Time</span>
+            <select id="timeframeSelect" class="dock-input">
+                <option value="1">1s</option>
+                <option value="5">5s</option>
+                <option value="8" selected>8s</option>
+                <option value="15">15s</option>
+                <option value="60">1m</option>
+            </select>
+        </div>
+
+        <div class="dock-item">
+            <span class="dock-label">Principal</span>
+            <input type="number" id="principal" class="dock-input" value="1.00" step="0.01">
+        </div>
+
+        <div class="dock-item">
+            <span class="dock-label">Leverage</span>
+            <select id="tradeLeverage" class="dock-input">
+                <option value="100">100x</option>
+                <option value="300">300x</option>
+                <option value="500" selected>500x</option>
+                <option value="800">800x</option>
+            </select>
+        </div>
+        
+        <div class="dock-item">
+            <span class="dock-label">Target $</span>
+            <input type="number" id="liveTargetProfit" class="dock-input" value="1.00" step="0.01">
+        </div>
+
+        <!-- Action Buttons take full height of their grid cell -->
+        <div class="dock-item" style="padding: 0; min-width: 80px;">
+            <button class="btn-action btn-buy" onclick="openTrade('buy')" title="Buy (Up)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                Buy
+            </button>
+        </div>
+
+        <div class="dock-item" style="padding: 0; min-width: 80px;">
+            <button class="btn-action btn-sell" onclick="openTrade('sell')" title="Sell (Down)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                Sell
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* =========================================================
+       USER'S ORIGINAL DERIV LOGIC - UNTOUCHED 
+       ========================================================= */
+    const TOKEN = "pat_aa50bbfd81b361ad5ed0114329ed2753c651560a143f67f511011dccaaf37e90";
+    const APP_ID = "33wuhc3RztQ6f2rwZijoR";
+    const API_BASE = "https://api.derivws.com";
+    let ws;
+    let currentPrice = 0;
+    let activeTrades = {};
+    let isDemoAcc = true;
+    let tickHistory = [];
+    let pendingTrade = null;
+
+    async function getAccountId() {
+        const res = await fetch(`${API_BASE}/trading/v1/options/accounts`, {
+            method: 'GET',
+            headers: { 'Deriv-App-ID': APP_ID, 'Authorization': `Bearer ${TOKEN}` }
+        });
+        const json = await res.json();
+        const accounts = Array.isArray(json.data) ? json.data : [];
+        const targetAccount = accounts.find(acct => isDemoAcc ? acct.account_type === "demo" : acct.account_type !== "demo");
+        if (!targetAccount) throw new Error("Account not found");
+        return targetAccount.account_id;
+    }
+
+    async function getWsUrl(accountId) {
+        const res = await fetch(`${API_BASE}/trading/v1/options/accounts/${accountId}/otp`, {
+            method: 'POST',
+            headers: { 'Deriv-App-ID': APP_ID, 'Authorization': `Bearer ${TOKEN}` }
+        });
+        const json = await res.json();
+        return json.data.url;
+    }
+
+    async function connectAPI() {
+        try {
+            document.getElementById('live-price').innerText = "Connecting...";
+            const accountId = await getAccountId();
+            const wsUrl = await getWsUrl(accountId);
+
+            ws = new WebSocket(wsUrl);
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ ticks_history: "frxXAUUSD", end: "latest", count: 1000, style: "ticks", subscribe: 1 }));
+                ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+            };
+
+            ws.onmessage = (msg) => {
+                const data = JSON.parse(msg.data);
+                
+                if (data.history) {
+                    const times = data.history.times;
+                    const prices = data.history.prices;
+                    for (let i = 0; i < times.length; i++) tickHistory.push({ time: times[i], price: prices[i] });
+                    currentPrice = prices[prices.length - 1];
+                    updateUI();
+                }
+
+                if (data.tick) {
+                    currentPrice = data.tick.quote;
+                    tickHistory.push({ time: data.tick.epoch, price: currentPrice });
+                    if (tickHistory.length > 1500) tickHistory.shift();
+                    updateUI();
+                }
+
+                if (data.msg_type === 'buy') {
+                    const contractId = data.buy.contract_id;
+                    const entryTime = tickHistory.length > 0 ? tickHistory[tickHistory.length - 1].time : Math.floor(Date.now() / 1000);
+                    const tDir = pendingTrade ? pendingTrade.direction : 'buy';
+                    
+                    activeTrades[contractId] = { 
+                        buyPrice: data.buy.buy_price,
+                        entrySpot: currentPrice,
+                        entryTime: entryTime,
+                        direction: tDir,
+                        multiplier: pendingTrade ? pendingTrade.multiplier : 100,
+                        profit: 0
+                    };
+
+                    const chartWrapper = document.getElementById('chart-wrapper');
+                    const dirColor = tDir === 'buy' ? 'var(--buy-color)' : 'var(--sell-color)';
+                    chartWrapper.insertAdjacentHTML('beforeend', `
+                        <div id="chart-trade-${contractId}" class="on-chart-trade" style="display: none;">
+                            <span style="color: ${dirColor}; font-weight: bold;">${tDir.toUpperCase()}</span>
+                            <span id="chart-pnl-${contractId}" style="font-family: monospace; font-weight: bold;">$0.00</span>
+                            <button class="btn-close" onclick="closeTrade(${contractId})">✕</button>
+                        </div>
+                    `);
+
+                    ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 }));
+                    
+                    document.getElementById('activeTradesContainer').insertAdjacentHTML('afterbegin', `
+                        <div class="trade-card" id="trade-${contractId}">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                                <strong>#${contractId.toString().slice(-4)}</strong>
+                                <span id="pnl-${contractId}" style="font-weight:bold;">$0.00</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="color:var(--label-color)">$${data.buy.buy_price.toFixed(2)}</span>
+                                <button class="btn-close" onclick="closeTrade(${contractId})">✕</button>
+                            </div>
+                        </div>
+                    `);
+                } else if (data.msg_type === 'proposal_open_contract') {
+                    const poc = data.proposal_open_contract;
+                    if (poc && poc.contract_id) {
+                        const realPnl = parseFloat(poc.profit) || 0;
+                        const pnlColor = realPnl >= 0 ? 'var(--buy-color)' : 'var(--sell-color)';
+                        const sign = realPnl >= 0 ? '+' : '';
+
+                        const pnlEl = document.getElementById(`pnl-${poc.contract_id}`);
+                        if (pnlEl) {
+                            pnlEl.style.color = pnlColor;
+                            pnlEl.innerText = `${sign}$${realPnl.toFixed(2)}`;
+                        }
+                        const chartPnlEl = document.getElementById(`chart-pnl-${poc.contract_id}`);
+                        if (chartPnlEl) {
+                            chartPnlEl.style.color = pnlColor;
+                            chartPnlEl.innerText = `${sign}$${Math.abs(realPnl).toFixed(2)}`;
+                        }
+
+                        if (poc.is_sold || poc.status === 'sold') handleTradeClosed(poc.contract_id);
+                    }
+                } else if (data.msg_type === 'sell') {
+                    handleTradeClosed(data.sell.contract_id);
+                } else if (data.msg_type === 'balance') {
+                    document.getElementById('accBalance').innerText = `${data.balance.currency} ${data.balance.balance.toFixed(2)}`;
+                }
+            };
+
+            ws.onclose = () => setTimeout(connectAPI, 3000);
+        } catch (err) {
+            document.getElementById('live-price').innerText = "Auth Failed";
+        }
+    }
+
+    connectAPI();
+
+    function updateUI() {
+        document.getElementById('live-price').innerText = currentPrice.toFixed(3);
+        drawMiniChart();
+    }
+
+    function openTrade(direction) {
+        if (currentPrice === 0) return;
+        const lev = parseInt(document.getElementById('tradeLeverage').value);
+        const prin = parseFloat(document.getElementById('principal').value) || 1.0;
+        pendingTrade = { direction: direction, multiplier: lev, principal: prin };
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                buy: "1", price: Number(prin * 3), 
+                parameters: { amount: Number(prin), basis: "stake", contract_type: direction === 'buy' ? "MULTUP" : "MULTDOWN", currency: "USD", multiplier: lev, underlying_symbol: "frxXAUUSD" }
+            }));
+        }
+    }
+
+    function closeTrade(id) { if (ws) ws.send(JSON.stringify({ sell: id, price: 0 })); }
+    function handleTradeClosed(id) {
+        if (activeTrades[id]) delete activeTrades[id];
+        const card = document.getElementById(`trade-${id}`);
+        if (card) card.remove();
+        const tag = document.getElementById(`chart-trade-${id}`);
+        if (tag) tag.remove();
+    }
+    
+    function toggleAccount() {
+        isDemoAcc = !isDemoAcc;
+        document.getElementById('accBalance').innerText = "--";
+        if (ws) ws.close(); else connectAPI();
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', drawMiniChart);
+
+    function drawMiniChart() {
+        const canvas = document.getElementById('miniChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        // Ensure canvas dimensions match container
+        const container = canvas.parentElement;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        const dpr = window.devicePixelRatio || 1;
+        if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+        ctx.clearRect(0, 0, width, height);
+        if (tickHistory.length < 2) return;
+
+        const candleTime = parseInt(document.getElementById('timeframeSelect').value) || 8;
+        const candlesMap = new Map();
+        
+        tickHistory.forEach(t => {
+            const group = Math.floor(t.time / candleTime) * candleTime;
+            if (!candlesMap.has(group)) candlesMap.set(group, { time: group, open: t.price, high: t.price, low: t.price, close: t.price });
+            else {
+                let c = candlesMap.get(group);
+                c.high = Math.max(c.high, t.price); c.low = Math.min(c.low, t.price); c.close = t.price;
+            }
+        });
+        
+        const candles = Array.from(candlesMap.values()).sort((a,b) => a.time - b.time);
+        const yAxisWidth = 60;
+        const xAxisHeight = 20;
+        const chartAreaWidth = width - yAxisWidth;
+        const chartHeight = height - xAxisHeight;
+
+        const candleWidth = 8;
+        const totalCandleWidth = 12;
+        const emptyGridSpace = chartAreaWidth * 0.3; // 30% empty space on right
+        const drawableWidth = chartAreaWidth - emptyGridSpace;
+        const maxVisible = Math.floor(drawableWidth / totalCandleWidth);
+        const visibleCandles = candles.slice(-maxVisible);
+
+        if (visibleCandles.length === 0) return;
+
+        let minPrice = Math.min(...visibleCandles.map(c => c.low));
+        let maxPrice = Math.max(...visibleCandles.map(c => c.high));
+
+        Object.values(activeTrades).forEach(t => {
+            if (t.entrySpot) {
+                minPrice = Math.min(minPrice, t.entrySpot); maxPrice = Math.max(maxPrice, t.entrySpot);
+                const burst = t.direction === 'buy' ? t.entrySpot * (1 - (1/t.multiplier)) : t.entrySpot * (1 + (1/t.multiplier));
+                minPrice = Math.min(minPrice, burst); maxPrice = Math.max(maxPrice, burst);
+            }
+        });
+
+        let range = maxPrice - minPrice || 1;
+        let pad = range * 0.15;
+        minPrice -= pad; maxPrice += pad;
+        range = maxPrice - minPrice;
+
+        const getY = (price) => chartHeight - ((price - minPrice) / range) * chartHeight;
+        const getX = (index) => drawableWidth - ((visibleCandles.length - index) * totalCandleWidth);
+
+        // Grid
+        ctx.strokeStyle = '#1e2459'; ctx.lineWidth = 1;
+        for(let i=1; i<5; i++) {
+            let yLine = (chartHeight / 5) * i;
+            ctx.beginPath(); ctx.moveTo(0, yLine); ctx.lineTo(chartAreaWidth, yLine); ctx.stroke();
+            ctx.fillStyle = '#8b94b0'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText((maxPrice - (range * (i/5))).toFixed(3), chartAreaWidth + 6, yLine);
+        }
+
+        // Candles
+        for (let i = 0; i < visibleCandles.length; i++) {
+            const c = visibleCandles[i];
+            const color = c.close >= c.open ? '#238636' : '#da3633';
+            const x = getX(i);
+            ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x + candleWidth/2, getY(c.high)); ctx.lineTo(x + candleWidth/2, getY(c.low)); ctx.stroke();
+            const yTop = Math.min(getY(c.open), getY(c.close));
+            const yBot = Math.max(getY(c.open), getY(c.close));
+            ctx.fillRect(x, yTop, candleWidth, Math.max(1, yBot - yTop));
+        }
+        
+        // Trades
+        const placedBoxes = [];
+        Object.keys(activeTrades).forEach(id => {
+            const t = activeTrades[id];
+            if (t.entrySpot) {
+                const entryY = getY(t.entrySpot);
+                const burstY = getY(t.direction === 'buy' ? t.entrySpot * (1 - (1/t.multiplier)) : t.entrySpot * (1 + (1/t.multiplier)));
+                
+                // Target Profit Line
+                const targetVal = parseFloat(document.getElementById('liveTargetProfit').value) || 1.0;
+                const posSize = t.principal * t.multiplier;
+                const comm = t.principal * (0.02 / 0.02) * 0.06; // Rough comm estimate
+                const targetMove = (comm + targetVal) / posSize;
+                const targetPrice = t.direction === 'buy' ? t.entrySpot * (1 + targetMove) : t.entrySpot * (1 - targetMove);
+                const targetY = getY(targetPrice);
+
+                ctx.strokeStyle = '#58a6ff'; ctx.setLineDash([4, 4]);
+                ctx.beginPath(); ctx.moveTo(0, entryY); ctx.lineTo(chartAreaWidth, entryY); ctx.stroke();
+                
+                ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; ctx.setLineDash([2, 2]);
+                ctx.beginPath(); ctx.moveTo(0, burstY); ctx.lineTo(chartAreaWidth, burstY); ctx.stroke();
+
+                ctx.strokeStyle = '#238636'; ctx.setLineDash([2, 2]);
+                ctx.beginPath(); ctx.moveTo(0, targetY); ctx.lineTo(chartAreaWidth, targetY); ctx.stroke();
+                ctx.setLineDash([]);
+
+                const el = document.getElementById(`chart-trade-${id}`);
+                if (el && t.entryTime) {
+                    const matchIdx = visibleCandles.findIndex(c => c.time >= Math.floor(t.entryTime / candleTime) * candleTime);
+                    let exactX = matchIdx !== -1 ? getX(matchIdx) + (candleWidth/2) : getX(visibleCandles.length - 1) + (candleWidth/2);
+                    if (exactX >= 0) {
+                        el.style.left = `${Math.min(exactX, chartAreaWidth - 10)}px`;
+                        el.style.top = `${entryY + (t.direction === 'buy' ? -15 : 15)}px`;
+                        el.style.display = 'flex';
+                    } else el.style.display = 'none';
+                }
+            }
+        });
+        
+        // Current Price
+        const currentY = getY(currentPrice);
+        const isUp = currentPrice >= (visibleCandles[visibleCandles.length-1]?.open || 0);
+        ctx.strokeStyle = isUp ? '#238636' : '#da3633';
+        ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(0, currentY); ctx.lineTo(chartAreaWidth, currentY); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = ctx.strokeStyle; ctx.fillRect(chartAreaWidth, currentY - 11, yAxisWidth, 22);
+        ctx.fillStyle = '#fff'; ctx.fillText(currentPrice.toFixed(3), chartAreaWidth + (yAxisWidth/2), currentY);
+    }
+</script>
 </body>
 </html>
