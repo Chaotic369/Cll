@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Trading Terminal</title>
+    <title>Minimal Dock Terminal</title>
     <style>
         /* Base layout */
         body, html {
@@ -15,6 +15,7 @@
             display: flex;
             flex-direction: column;
             font-family: sans-serif;
+            background: white;
         }
 
         /* 90% Edge-to-Edge Chart */
@@ -23,29 +24,44 @@
             width: 100vw;
         }
 
-        /* 10% Single-Line Grid */
-        .controls-container {
+        /* 10% Bottom Area to hold the taskbar */
+        .bottom-area {
             height: 10vh;
             width: 100vw;
-            display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: 1fr;
+            display: flex;
+            justify-content: center; /* Centers the taskbar horizontally */
+            align-items: center;     /* Centers the taskbar vertically */
         }
 
-        /* Plain table-grid styling for all items */
-        .controls-container > * {
+        /* iPad / Mac Taskbar (Dock) styling */
+        .controls-container {
+            display: grid;
+            grid-auto-flow: column;
             border: 1px solid black;
+            border-radius: 16px; /* Gives the Mac dock rounded edges */
+            overflow: hidden;    /* Clips the internal buttons to the rounded corners */
+            height: 60%;         /* Makes the bar slightly smaller than the 10vh area */
+        }
+
+        /* Plain table-grid styling for items inside the dock */
+        .controls-container > * {
+            border: none;
+            border-right: 1px solid black; /* Creates the table grid lines between buttons */
             background: white;
             color: black;
             font-size: clamp(10px, 1.2vw, 14px);
             text-align: center;
             box-sizing: border-box;
-            margin-left: -1px; /* Collapses borders together like a real table */
-            margin-top: -1px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
+            padding: 0 1.5vw; /* Spaces the buttons out based on screen size */
+            outline: none;
+        }
+
+        /* Remove the grid line on the very last button to keep the outer border clean */
+        .controls-container > *:last-child {
+            border-right: none;
         }
 
         .controls-container > button {
@@ -54,6 +70,7 @@
         
         .controls-container > input {
             cursor: text;
+            width: 80px;
         }
     </style>
 </head>
@@ -82,18 +99,21 @@
         </div>
     </div>
 
-    <div class="controls-container">
-        <!-- Replaced Chart Options -->
-        <input type="text" value="BTCUSDT" title="Symbol" />
-        <button>15m</button>
-        <button>1H</button>
-        <button>1D</button>
-        <button>Indicators</button>
-        
-        <!-- Action Buttons -->
-        <button>Buy Market</button>
-        <button>Sell Market</button>
-        <button>Close</button>
+    <!-- Bottom area with centered dock -->
+    <div class="bottom-area">
+        <div class="controls-container">
+            <!-- Replaced Chart Options -->
+            <input type="text" value="BTCUSDT" title="Symbol" />
+            <button>15m</button>
+            <button>1H</button>
+            <button>1D</button>
+            <button>Indicators</button>
+            
+            <!-- Action Buttons -->
+            <button>Buy Market</button>
+            <button>Sell Market</button>
+            <button>Close</button>
+        </div>
     </div>
 
 </body>
