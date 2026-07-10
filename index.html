@@ -89,41 +89,34 @@
         }
 
         /* The Dock / Taskbar */
-        .controls-container {
-            display: grid;
-            grid-auto-flow: column;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-            height: 65%;
-            background: var(--card-bg);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+                .controls-container {
+                    display: grid;
+                    grid-auto-flow: column;
+                    grid-auto-columns: 1fr;
+                    border: 1px solid var(--border-color);
+                    border-radius: 16px;
+                    overflow: hidden;
+                    height: 65%;
+                    width: 96vw;
+                    max-width: 700px;
+                    background: var(--card-bg);
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                }
 
-        .dock-item {
-            border: none;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0 16px;
-            min-width: 70px;
-            transition: background 0.2s;
-        }
+                .dock-item {
+                    border: none;
+                    border-right: 1px solid var(--border-color);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0 4px;
+                    transition: background 0.2s;
+                }
 
-        .controls-container > *:last-child {
-            border-right: none;
-        }
-
-        .dock-label {
-            color: var(--label-color);
-            font-size: 9px;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 2px;
-            pointer-events: none;
-        }
+                .controls-container > *:last-child {
+                    border-right: none;
+                }
 
         .dock-input {
             background: transparent;
@@ -216,39 +209,27 @@
                 .trade-list-item:last-child { border-bottom: none; }
 
                                 /* Mobile Squeeze Styles */
-                                @media (max-width: 768px) {
-                                    .controls-container {
-                                        width: 96vw;
-                                        border-radius: 12px;
-                                        overflow-x: auto; /* Allows swiping if screen is extremely small */
-                                        -webkit-overflow-scrolling: touch;
-                                        scrollbar-width: none; /* Firefox */
-                                        -ms-overflow-style: none; /* IE and Edge */
-                                        justify-content: flex-start;
-                                    }
-                                    .controls-container::-webkit-scrollbar {
-                                        display: none; /* Chrome, Safari and Opera */
-                                    }
-                                    .dock-item {
-                                        padding: 0 6px;
-                                        min-width: 45px !important;
-                                    }
-                                    .dock-label {
-                                        font-size: 8px;
-                                    }
-                                    .dock-input, #accBalance {
-                                        font-size: 11px;
-                                        padding: 0;
-                                    }
-                                    .btn-action {
-                                        font-size: 10px;
-                                        gap: 2px;
-                                    }
-                                    .btn-action svg {
-                                        width: 14px;
-                                        height: 14px;
-                                    }
-                                }
+                                                @media (max-width: 768px) {
+                                                    .controls-container {
+                                                        width: 96vw;
+                                                        border-radius: 12px;
+                                                        overflow-x: visible;
+                                                    }
+                                                    .dock-item {
+                                                        padding: 0 2px;
+                                                    }
+                                                    .dock-input, #accBalance {
+                                                        font-size: 12px;
+                                                        padding: 0;
+                                                    }
+                                                    .btn-action {
+                                                        gap: 0;
+                                                    }
+                                                    .btn-action svg {
+                                                        width: 18px;
+                                                        height: 18px;
+                                                    }
+                                                }
                             </style>
 </head>
 <body>
@@ -456,8 +437,8 @@
                 } else if (data.msg_type === 'sell') {
                     handleTradeClosed(data.sell.contract_id);
                 } else if (data.msg_type === 'balance') {
-                    document.getElementById('accBalance').innerText = `${data.balance.currency} ${data.balance.balance.toFixed(2)}`;
-                }
+                                    document.getElementById('accBalance').innerText = `${data.balance.balance.toFixed(2)}`;
+                                }
             };
 
             ws.onclose = () => setTimeout(connectAPI, 3000);
@@ -720,23 +701,24 @@
                 const entryY = getY(t.entrySpot);
                 const burstY = getY(t.direction === 'buy' ? t.entrySpot * (1 - (1/t.multiplier)) : t.entrySpot * (1 + (1/t.multiplier)));
                 
-                // Target Profit Line
-                const targetVal = parseFloat(document.getElementById('liveTargetProfit').value) || 1.0;
-                const posSize = t.principal * t.multiplier;
-                const comm = t.principal * (0.02 / 0.02) * 0.06; 
-                const targetMove = (comm + targetVal) / posSize;
-                const targetPrice = t.direction === 'buy' ? t.entrySpot * (1 + targetMove) : t.entrySpot * (1 - targetMove);
-                const targetY = getY(targetPrice);
+                const posSize = (t.principal || 1) * t.multiplier;
+                                const comm = (t.principal || 1) * 0.06; 
 
-                ctx.strokeStyle = '#58a6ff'; ctx.setLineDash([4, 4]);
-                ctx.beginPath(); ctx.moveTo(0, entryY); ctx.lineTo(chartAreaWidth, entryY); ctx.stroke();
+                                const breakEvenMove = comm / posSize;
+                                const breakEvenPrice = t.direction === 'buy' ? t.entrySpot * (1 + breakEvenMove) : t.entrySpot * (1 - breakEvenMove);
+                                const breakEvenY = getY(breakEvenPrice);
+
+                                ctx.strokeStyle = '#58a6ff'; ctx.setLineDash([4, 4]);
+                                ctx.beginPath(); ctx.moveTo(0, entryY); ctx.lineTo(chartAreaWidth, entryY); ctx.stroke();
                 
-                ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; ctx.setLineDash([2, 2]);
-                ctx.beginPath(); ctx.moveTo(0, burstY); ctx.lineTo(chartAreaWidth, burstY); ctx.stroke();
+                                ctx.strokeStyle = 'rgba(218, 54, 51, 0.8)'; ctx.setLineDash([2, 2]);
+                                ctx.beginPath(); ctx.moveTo(0, burstY); ctx.lineTo(chartAreaWidth, burstY); ctx.stroke();
 
-                ctx.strokeStyle = '#238636'; ctx.setLineDash([2, 2]);
-                ctx.beginPath(); ctx.moveTo(0, targetY); ctx.lineTo(chartAreaWidth, targetY); ctx.stroke();
-                ctx.setLineDash([]);
+                                // Break-even Line (White dotted)
+                                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.setLineDash([1, 4]);
+                                ctx.beginPath(); ctx.moveTo(0, breakEvenY); ctx.lineTo(chartAreaWidth, breakEvenY); ctx.stroke();
+                
+                                ctx.setLineDash([]);
 
                 const el = document.getElementById(`chart-trade-${id}`);
                 if (el && t.entryTime) {
