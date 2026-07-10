@@ -43,7 +43,7 @@
             display: block;
         }
 
-        /* Floating Info Overlay (Replaces the top header) */
+        /* Floating Info Overlay */
         .chart-info-overlay {
             position: absolute;
             top: 16px;
@@ -55,32 +55,10 @@
         .header-title { font-size: 14px; font-weight: 600; color: var(--text-color); opacity: 0.8; }
         #live-price { color: var(--buy-color); font-size: 24px; font-family: monospace; font-weight: bold; margin-top: 4px; }
 
-        /* Floating Trades on left */
-        .floating-trades {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 20;
-            pointer-events: none;
-        }
-
-        .trade-card {
-            background: rgba(13, 17, 23, 0.85);
-            backdrop-filter: blur(4px);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            border: 1px solid var(--border-color);
-            pointer-events: auto;
-            min-width: 150px;
-        }
-
+        /* On-Chart Trade Tags */
         .on-chart-trade {
             position: absolute;
-            background: rgba(13, 17, 23, 0.7);
+            background: rgba(13, 17, 23, 0.9);
             border-radius: 4px;
             padding: 2px 6px;
             font-size: 11px;
@@ -91,11 +69,14 @@
             transform: translateY(-50%);
             margin-left: 4px;
             border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            transition: top 0.2s, left 0.2s; /* Smooth out stagger adjustments */
         }
 
         .btn-close {
             background: transparent; border: none; color: var(--sell-color); cursor: pointer; padding: 2px 4px; font-size: 12px; font-weight: bold;
         }
+        .btn-close:hover { color: #ff5555; }
 
         /* 10% Bottom Area */
         .bottom-area {
@@ -119,7 +100,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* Individual cells in the dock grid */
         .dock-item {
             border: none;
             border-right: 1px solid var(--border-color);
@@ -136,7 +116,6 @@
             border-right: none;
         }
 
-        /* Labels and Inputs seamlessly styled inside the dock */
         .dock-label {
             color: var(--label-color);
             font-size: 9px;
@@ -159,7 +138,6 @@
             -moz-appearance: textfield;
         }
 
-        /* Remove arrows from number inputs */
         .dock-input::-webkit-outer-spin-button,
         .dock-input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -170,7 +148,6 @@
             background: var(--card-bg);
         }
 
-        /* Action Buttons */
         .btn-action {
             background: transparent;
             border: none;
@@ -192,7 +169,6 @@
         .btn-buy { color: var(--buy-color); }
         .btn-sell { color: var(--sell-color); }
 
-        /* Specific interactive items */
         .balance-item { cursor: pointer; }
         .balance-item:hover { background: rgba(255,255,255,0.05); }
         #accBalance { color: var(--accent-blue); font-size: 13px; font-weight: bold; }
@@ -202,14 +178,10 @@
 <body>
 
 <div class="chart-container" id="chart-wrapper">
-    <!-- Header overlay moved into chart area -->
     <div class="chart-info-overlay">
         <div class="header-title">Gold (XAU/USD)</div>
         <div id="live-price">Connecting...</div>
     </div>
-
-    <!-- Floating trades -->
-    <div id="activeTradesContainer" class="floating-trades"></div>
     
     <!-- Canvas Chart -->
     <canvas id="miniChart"></canvas>
@@ -255,7 +227,6 @@
             <input type="number" id="liveTargetProfit" class="dock-input" value="1.00" step="0.01">
         </div>
 
-        <!-- Action Buttons take full height of their grid cell -->
         <div class="dock-item" style="padding: 0; min-width: 80px;">
             <button class="btn-action btn-buy" onclick="openTrade('buy')" title="Buy (Up)">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -274,9 +245,6 @@
 </div>
 
 <script>
-    /* =========================================================
-       USER'S ORIGINAL DERIV LOGIC - UNTOUCHED 
-       ========================================================= */
     const TOKEN = "pat_aa50bbfd81b361ad5ed0114329ed2753c651560a143f67f511011dccaaf37e90";
     const APP_ID = "33wuhc3RztQ6f2rwZijoR";
     const API_BASE = "https://api.derivws.com";
@@ -354,6 +322,7 @@
 
                     const chartWrapper = document.getElementById('chart-wrapper');
                     const dirColor = tDir === 'buy' ? 'var(--buy-color)' : 'var(--sell-color)';
+                    
                     chartWrapper.insertAdjacentHTML('beforeend', `
                         <div id="chart-trade-${contractId}" class="on-chart-trade" style="display: none;">
                             <span style="color: ${dirColor}; font-weight: bold;">${tDir.toUpperCase()}</span>
@@ -364,18 +333,6 @@
 
                     ws.send(JSON.stringify({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 }));
                     
-                    document.getElementById('activeTradesContainer').insertAdjacentHTML('afterbegin', `
-                        <div class="trade-card" id="trade-${contractId}">
-                            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                                <strong>#${contractId.toString().slice(-4)}</strong>
-                                <span id="pnl-${contractId}" style="font-weight:bold;">$0.00</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="color:var(--label-color)">$${data.buy.buy_price.toFixed(2)}</span>
-                                <button class="btn-close" onclick="closeTrade(${contractId})">✕</button>
-                            </div>
-                        </div>
-                    `);
                 } else if (data.msg_type === 'proposal_open_contract') {
                     const poc = data.proposal_open_contract;
                     if (poc && poc.contract_id) {
@@ -383,11 +340,6 @@
                         const pnlColor = realPnl >= 0 ? 'var(--buy-color)' : 'var(--sell-color)';
                         const sign = realPnl >= 0 ? '+' : '';
 
-                        const pnlEl = document.getElementById(`pnl-${poc.contract_id}`);
-                        if (pnlEl) {
-                            pnlEl.style.color = pnlColor;
-                            pnlEl.innerText = `${sign}$${realPnl.toFixed(2)}`;
-                        }
                         const chartPnlEl = document.getElementById(`chart-pnl-${poc.contract_id}`);
                         if (chartPnlEl) {
                             chartPnlEl.style.color = pnlColor;
@@ -431,10 +383,9 @@
     }
 
     function closeTrade(id) { if (ws) ws.send(JSON.stringify({ sell: id, price: 0 })); }
+    
     function handleTradeClosed(id) {
         if (activeTrades[id]) delete activeTrades[id];
-        const card = document.getElementById(`trade-${id}`);
-        if (card) card.remove();
         const tag = document.getElementById(`chart-trade-${id}`);
         if (tag) tag.remove();
     }
@@ -453,7 +404,6 @@
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         
-        // Ensure canvas dimensions match container
         const container = canvas.parentElement;
         const width = container.clientWidth;
         const height = container.clientHeight;
@@ -488,27 +438,22 @@
 
         const candleWidth = 8;
         const totalCandleWidth = 12;
-        const emptyGridSpace = chartAreaWidth * 0.3; // 30% empty space on right
+        const emptyGridSpace = chartAreaWidth * 0.3; 
         const drawableWidth = chartAreaWidth - emptyGridSpace;
         const maxVisible = Math.floor(drawableWidth / totalCandleWidth);
         const visibleCandles = candles.slice(-maxVisible);
 
         if (visibleCandles.length === 0) return;
 
+        // ONLY base chart min/max on visible candles so it doesn't zoom out violently
         let minPrice = Math.min(...visibleCandles.map(c => c.low));
         let maxPrice = Math.max(...visibleCandles.map(c => c.high));
 
-        Object.values(activeTrades).forEach(t => {
-            if (t.entrySpot) {
-                minPrice = Math.min(minPrice, t.entrySpot); maxPrice = Math.max(maxPrice, t.entrySpot);
-                const burst = t.direction === 'buy' ? t.entrySpot * (1 - (1/t.multiplier)) : t.entrySpot * (1 + (1/t.multiplier));
-                minPrice = Math.min(minPrice, burst); maxPrice = Math.max(maxPrice, burst);
-            }
-        });
-
         let range = maxPrice - minPrice || 1;
-        let pad = range * 0.15;
-        minPrice -= pad; maxPrice += pad;
+        // Increase padding to make the chart look "smaller" and strictly centered
+        let pad = range * 0.8; 
+        minPrice -= pad; 
+        maxPrice += pad;
         range = maxPrice - minPrice;
 
         const getY = (price) => chartHeight - ((price - minPrice) / range) * chartHeight;
@@ -535,8 +480,9 @@
             ctx.fillRect(x, yTop, candleWidth, Math.max(1, yBot - yTop));
         }
         
-        // Trades
+        // Trades and collision tracking
         const placedBoxes = [];
+        
         Object.keys(activeTrades).forEach(id => {
             const t = activeTrades[id];
             if (t.entrySpot) {
@@ -546,7 +492,7 @@
                 // Target Profit Line
                 const targetVal = parseFloat(document.getElementById('liveTargetProfit').value) || 1.0;
                 const posSize = t.principal * t.multiplier;
-                const comm = t.principal * (0.02 / 0.02) * 0.06; // Rough comm estimate
+                const comm = t.principal * (0.02 / 0.02) * 0.06; 
                 const targetMove = (comm + targetVal) / posSize;
                 const targetPrice = t.direction === 'buy' ? t.entrySpot * (1 + targetMove) : t.entrySpot * (1 - targetMove);
                 const targetY = getY(targetPrice);
@@ -565,11 +511,28 @@
                 if (el && t.entryTime) {
                     const matchIdx = visibleCandles.findIndex(c => c.time >= Math.floor(t.entryTime / candleTime) * candleTime);
                     let exactX = matchIdx !== -1 ? getX(matchIdx) + (candleWidth/2) : getX(visibleCandles.length - 1) + (candleWidth/2);
+                    
                     if (exactX >= 0) {
-                        el.style.left = `${Math.min(exactX, chartAreaWidth - 10)}px`;
-                        el.style.top = `${entryY + (t.direction === 'buy' ? -15 : 15)}px`;
+                        let finalX = Math.min(exactX, chartAreaWidth - 100); 
+                        let finalY = entryY + (t.direction === 'buy' ? -15 : 15);
+                        
+                        // Smart Collision Detection to prevent overlapping close buttons
+                        let collisionAttempts = 0;
+                        while(placedBoxes.some(box => Math.abs(box.x - finalX) < 80 && Math.abs(box.y - finalY) < 28) && collisionAttempts < 10) {
+                            // Nudge the tag further up or down based on trade direction to avoid overlap
+                            finalY += (t.direction === 'buy' ? -28 : 28); 
+                            collisionAttempts++;
+                        }
+                        
+                        // Register this tag's area as occupied
+                        placedBoxes.push({x: finalX, y: finalY});
+
+                        el.style.left = `${finalX}px`;
+                        el.style.top = `${finalY}px`;
                         el.style.display = 'flex';
-                    } else el.style.display = 'none';
+                    } else {
+                        el.style.display = 'none';
+                    }
                 }
             }
         });
