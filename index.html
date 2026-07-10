@@ -644,29 +644,39 @@
                     return getGlobalX(globalIdx);
                 };
 
-                // Time Axis & Grid
-                ctx.strokeStyle = '#1e2459'; ctx.lineWidth = 1;
-                for(let i=1; i<5; i++) {
-                    let yLine = (chartHeight / 5) * i;
-                    ctx.beginPath(); ctx.moveTo(0, yLine); ctx.lineTo(chartAreaWidth, yLine); ctx.stroke();
-                    ctx.fillStyle = '#8b94b0'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-                    ctx.fillText((maxPrice - (range * (i/5))).toFixed(3), chartAreaWidth + 6, yLine);
-                }
+                // Soft Horizontal Grid & Price Labels
+                                ctx.lineWidth = 1;
+                                for(let i=1; i<5; i++) {
+                                    let yLine = (chartHeight / 5) * i;
+                                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; // Soft grid color
+                                    ctx.beginPath(); ctx.moveTo(0, yLine); ctx.lineTo(chartAreaWidth, yLine); ctx.stroke();
+                    
+                                    ctx.fillStyle = '#8b94b0'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                                    ctx.fillText((maxPrice - (range * (i/5))).toFixed(3), chartAreaWidth + 6, yLine);
+                                }
         
-                // Time Axis Base Line
-                ctx.beginPath(); ctx.moveTo(0, chartHeight); ctx.lineTo(chartAreaWidth, chartHeight); ctx.stroke();
+                                // Time Axis Base Line
+                                ctx.strokeStyle = '#1e2459';
+                                ctx.beginPath(); ctx.moveTo(0, chartHeight); ctx.lineTo(chartAreaWidth, chartHeight); ctx.stroke();
         
-                let lastTimeX = -100;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-                for (let i = 0; i < visibleCandles.length; i++) {
-                    const x = getX(i) + candleWidth/2;
-                    if (x - lastTimeX > 60) {
-                        const d = new Date(visibleCandles[i].time * 1000);
-                        const tStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
-                        ctx.fillText(tStr, x, chartHeight + 4);
-                        lastTimeX = x;
-                    }
-                }
+                                // Soft Vertical Grid & Time Labels
+                                let lastTimeX = -100;
+                                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                                for (let i = 0; i < visibleCandles.length; i++) {
+                                    const x = getX(i) + candleWidth/2;
+                                    if (x - lastTimeX > 60) {
+                                        // Soft vertical grid line
+                                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                                        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, chartHeight); ctx.stroke();
+
+                                        // Time label
+                                        ctx.fillStyle = '#8b94b0';
+                                        const d = new Date(visibleCandles[i].time * 1000);
+                                        const tStr = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
+                                        ctx.fillText(tStr, x, chartHeight + 4);
+                                        lastTimeX = x;
+                                    }
+                                }
 
                 // Candles
         for (let i = 0; i < visibleCandles.length; i++) {
