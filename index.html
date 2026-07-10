@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Trading Terminal</title>
+    <style>
+        /* Reset margins to allow edge-to-edge layout */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: #131722; /* TradingView dark theme background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; /* Prevents scrollbars */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chart section: takes up exactly 90% of the viewport height */
+        .chart-container {
+            height: 90vh;
+            width: 100vw;
+            background-color: #1e222d;
+            border-bottom: 2px solid #000000;
+        }
+
+        /* Button section: takes up the remaining 10% */
+        .controls-container {
+            height: 10vh;
+            width: 100vw;
+            display: grid;
+            /* Forces all child elements into a single horizontal line with equal widths */
+            grid-auto-flow: column;
+            grid-auto-columns: 1fr;
+            gap: 4px; /* Space between buttons */
+            padding: 4px;
+            box-sizing: border-box;
+            background-color: #131722;
+        }
+
+        /* Uniform button styling */
+        button {
+            background-color: #2a2e39;
+            color: #d1d4dc;
+            border: none;
+            border-radius: 4px;
+            /* clamp() ensures text shrinks on small screens but doesn't get too large on big monitors */
+            font-size: clamp(10px, 1.5vw, 16px);
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background-color: #363c4e;
+        }
+
+        /* Specific colors for execution buttons */
+        .buy { 
+            background-color: #26a69a; 
+            color: white; 
+        }
+        .buy:hover { background-color: #22968b; }
+        
+        .sell { 
+            background-color: #ef5350; 
+            color: white; 
+        }
+        .sell:hover { background-color: #d84b48; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 90% Edge-to-Edge Chart Area -->
+    <div class="chart-container">
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div id="tv_chart" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+          <script type="text/javascript">
+          new TradingView.widget({
+              "autosize": true,
+              "symbol": "BINANCE:BTCUSDT",
+              "interval": "15",
+              "timezone": "Etc/UTC",
+              "theme": "dark",
+              "style": "1",
+              "locale": "en",
+              "enable_publishing": false,
+              "backgroundColor": "#1e222d",
+              "hide_top_toolbar": false,
+              "hide_legend": false,
+              "save_image": false,
+              "container_id": "tv_chart"
+          });
+          </script>
+        </div>
+    </div>
+
+    <!-- 10% Single-Line Grid Button Area -->
+    <div class="controls-container">
+        <button class="buy">Buy Market</button>
+        <button class="sell">Sell Market</button>
+        <button>Close All</button>
+        <button>Reverse Position</button>
+        <button>Order Book</button>
+        <button>Settings</button>
+    </div>
+
+</body>
+</html>
