@@ -261,45 +261,45 @@
         </div>
 
         <div class="dock-item" title="Time">
-            <select id="timeframeSelect" class="dock-input">
-                <option value="1">1s</option>
-                <option value="5">5s</option>
-                <option value="8" selected>8s</option>
-                <option value="15">15s</option>
-                <option value="60">1m</option>
-            </select>
-        </div>
+                    <select id="timeframeSelect" class="dock-input" style="-webkit-appearance: none; appearance: none;">
+                        <option value="1">1s</option>
+                        <option value="5">5s</option>
+                        <option value="8" selected>8s</option>
+                        <option value="15">15s</option>
+                        <option value="60">1m</option>
+                    </select>
+                </div>
 
-        <div class="dock-item" title="Principal">
-            <input type="number" id="principal" class="dock-input" value="1.00" step="0.01">
-        </div>
+                <div class="dock-item" title="Principal">
+                    <input type="number" id="principal" class="dock-input" value="1.00" step="0.01">
+                </div>
 
-        <div class="dock-item" style="padding: 0;">
-            <button class="btn-action btn-buy" onclick="openTrade('buy')" title="Buy (Up)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-            </button>
-        </div>
-
-        <div class="dock-item" style="padding: 0;">
-            <button class="btn-action btn-sell" onclick="openTrade('sell')" title="Sell (Down)">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-            </button>
-        </div>
-
-        <div class="dock-item" title="Leverage">
-            <select id="tradeLeverage" class="dock-input">
-                <option value="100">100x</option>
-                <option value="300">300x</option>
-                <option value="500" selected>500x</option>
-                <option value="800">800x</option>
-            </select>
-        </div>
-        
-        <div class="dock-item" style="padding: 0;">
-                    <button class="btn-action" onclick="toggleTradesPopup()" title="Trades">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <div class="dock-item" style="padding: 0;">
+                    <button class="btn-action btn-buy" onclick="openTrade('buy')" title="Buy (Up)">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                     </button>
                 </div>
+
+                <div class="dock-item" style="padding: 0;">
+                    <button class="btn-action btn-sell" onclick="openTrade('sell')" title="Sell (Down)">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    </button>
+                </div>
+
+                <div class="dock-item" title="Leverage">
+                    <select id="tradeLeverage" class="dock-input" style="-webkit-appearance: none; appearance: none;">
+                        <option value="100">100x</option>
+                        <option value="300">300x</option>
+                        <option value="500" selected>500x</option>
+                        <option value="800">800x</option>
+                    </select>
+                </div>
+        
+        <div class="dock-item" style="padding: 0;">
+            <button class="btn-action" onclick="toggleTradesPopup()" title="Trades">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </button>
+        </div>
 
     </div>
 </div>
