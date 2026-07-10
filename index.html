@@ -56,22 +56,28 @@
         #live-price { color: var(--buy-color); font-size: 24px; font-family: monospace; font-weight: bold; margin-top: 4px; }
 
         /* On-Chart Trade Tags */
-        .on-chart-trade {
-            position: absolute;
-            background: rgba(13, 17, 23, 0.9);
-            border-radius: 4px;
-            padding: 2px 6px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            z-index: 10;
-            transform: translateY(-50%);
-            margin-left: 4px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            transition: top 0.2s, left 0.2s; /* Smooth out stagger adjustments */
-        }
+                .on-chart-trade {
+                    position: absolute;
+                    background: rgba(13, 17, 23, 0.65);
+                    backdrop-filter: blur(2px);
+                    border-radius: 4px;
+                    padding: 2px 6px;
+                    font-size: 11px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    z-index: 10;
+                    transform: translateY(-50%);
+                    margin-left: 4px;
+                    border: 1px solid rgba(48, 54, 61, 0.7);
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+                    transition: top 0.2s, left 0.2s, opacity 0.2s, background 0.2s;
+                }
+
+                .on-chart-trade:hover {
+                    background: rgba(13, 17, 23, 0.95);
+                    z-index: 100;
+                }
 
         .btn-close {
             background: transparent; border: none; color: var(--sell-color); cursor: pointer; padding: 2px 4px; font-size: 12px; font-weight: bold;
@@ -725,15 +731,20 @@
                     
                     if (exactX >= 0) {
                         let finalX = Math.min(exactX, chartAreaWidth - 100); 
-                        let finalY = entryY + (t.direction === 'buy' ? -15 : 15);
+                                                let finalY = entryY; // Center vertically exactly on the entry price line
                         
-                        // Smart Collision Detection to prevent overlapping close buttons
-                        let collisionAttempts = 0;
-                        while(placedBoxes.some(box => Math.abs(box.x - finalX) < 80 && Math.abs(box.y - finalY) < 28) && collisionAttempts < 10) {
-                            // Nudge the tag further up or down based on trade direction to avoid overlap
-                            finalY += (t.direction === 'buy' ? -28 : 28); 
-                            collisionAttempts++;
-                        }
+                                                // Smart Collision Detection to prevent overlapping close buttons
+                                                let collisionAttempts = 0;
+                                                while(placedBoxes.some(box => Math.abs(box.x - finalX) < 95 && Math.abs(box.y - finalY) < 24) && collisionAttempts < 50) {
+                                                    // Nudge the tag LEFT horizontally so they form a row on the entry line, avoiding blocking candles
+                                                    finalX -= 95;
+                                                    if (finalX < 10) {
+                                                        // Fallback if we hit the left edge of the screen: start stacking up/down
+                                                        finalX = Math.min(exactX, chartAreaWidth - 100) + (Math.random() * 20); 
+                                                        finalY += (t.direction === 'buy' ? -28 : 28);
+                                                    }
+                                                    collisionAttempts++;
+                                                }
                         
                         // Register this tag's area as occupied
                         placedBoxes.push({x: finalX, y: finalY});
