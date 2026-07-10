@@ -415,13 +415,14 @@
                     const tDir = pendingTrade ? pendingTrade.direction : 'buy';
                     
                     activeTrades[contractId] = { 
-                        buyPrice: data.buy.buy_price,
-                        entrySpot: currentPrice,
-                        entryTime: entryTime,
-                        direction: tDir,
-                        multiplier: pendingTrade ? pendingTrade.multiplier : 100,
-                        profit: 0
-                    };
+                                            buyPrice: data.buy.buy_price,
+                                            entrySpot: currentPrice,
+                                            entryTime: entryTime,
+                                            direction: tDir,
+                                            multiplier: pendingTrade ? pendingTrade.multiplier : 100,
+                                            principal: pendingTrade ? pendingTrade.principal : 1,
+                                            profit: 0
+                                        };
 
                     const chartWrapper = document.getElementById('chart-wrapper');
                     const dirColor = tDir === 'buy' ? 'var(--buy-color)' : 'var(--sell-color)';
@@ -481,33 +482,45 @@
         }
 
         function renderTradesList() {
-            const content = document.getElementById('tradesListContent');
-            const keys = Object.keys(activeTrades);
-            if (keys.length === 0) {
-                content.innerHTML = "No active trades.";
-                return;
-            }
-            let html = "";
-            keys.forEach(id => {
-                const t = activeTrades[id];
-                const pnlEl = document.getElementById(`chart-pnl-${id}`);
-                const pnlText = pnlEl ? pnlEl.innerText : "$0.00";
-                const dirColor = t.direction === 'buy' ? 'var(--buy-color)' : 'var(--sell-color)';
-                html += `
-                    <div class="trade-list-item">
-                        <div>
-                            <strong style="color:${dirColor}">${t.direction.toUpperCase()}</strong> #${id.toString().slice(-4)}<br>
-                            <span style="color:var(--label-color)">Entry: ${t.entrySpot}</span>
-                        </div>
-                        <div style="text-align: right;">
-                            <strong style="color:${pnlText.startsWith('+') ? 'var(--buy-color)' : 'var(--sell-color)'}">${pnlText}</strong><br>
-                            <button class="btn-close" onclick="closeTrade(${id})">Close</button>
-                        </div>
-                    </div>
-                `;
-            });
-            content.innerHTML = html;
-        }
+                    const content = document.getElementById('tradesListContent');
+                    const keys = Object.keys(activeTrades);
+                    if (keys.length === 0) {
+                        content.innerHTML = "No active trades.";
+                        return;
+                    }
+                    let html = "";
+                    keys.forEach(id => {
+                        const t = activeTrades[id];
+                        const pnlEl = document.getElementById(`chart-pnl-${id}`);
+                        const pnlText = pnlEl ? pnlEl.innerText : "$0.00";
+                        const dirColor = t.direction === 'buy' ? 'var(--buy-color)' : 'var(--sell-color)';
+                
+                        const posSize = (t.principal || 1) * t.multiplier;
+                        const comm = (t.principal || 1) * 0.06;
+                        const breakEvenMove = comm / posSize;
+                        const breakEvenPrice = t.direction === 'buy' ? t.entrySpot * (1 + breakEvenMove) : t.entrySpot * (1 - breakEvenMove);
+
+                        html += `
+                            <div class="trade-list-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between; width: 100%;">
+                                    <div>
+                                        <strong style="color:${dirColor}">${t.direction.toUpperCase()}</strong> #${id.toString().slice(-4)}<br>
+                                        <span style="color:var(--label-color)">Entry: ${t.entrySpot.toFixed(3)}</span>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <strong style="color:${pnlText.startsWith('+') ? 'var(--buy-color)' : 'var(--sell-color)'}">${pnlText}</strong><br>
+                                        <button class="btn-close" onclick="closeTrade(${id})">Close</button>
+                                    </div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 10px; background: rgba(255,255,255,0.05); padding: 4px 6px; border-radius: 4px;">
+                                    <span style="color:var(--label-color)">Comm: <span style="color:var(--sell-color)">-$${comm.toFixed(2)}</span></span>
+                                    <span style="color:var(--label-color)">Break-even: <span style="color:var(--text-color)">${breakEvenPrice.toFixed(3)}</span></span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    content.innerHTML = html;
+                }
 
     function openTrade(direction) {
         if (currentPrice === 0) return;
