@@ -170,10 +170,51 @@
         .btn-sell { color: var(--sell-color); }
 
         .balance-item { cursor: pointer; }
-        .balance-item:hover { background: rgba(255,255,255,0.05); }
-        #accBalance { color: var(--accent-blue); font-size: 13px; font-weight: bold; }
+                .balance-item:hover { background: rgba(255,255,255,0.05); }
+                #accBalance { color: var(--accent-blue); font-size: 13px; font-weight: bold; }
 
-    </style>
+                /* Trades Pop-up */
+                .trades-popup {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: var(--card-bg);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    padding: 16px;
+                    width: 300px;
+                    max-height: 60vh;
+                    overflow-y: auto;
+                    z-index: 100;
+                    display: none;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+                }
+                .trades-popup-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+                .trades-popup-close {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-color);
+                    cursor: pointer;
+                    font-size: 16px;
+                }
+                .trade-list-item {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 0;
+                    border-bottom: 1px solid var(--border-color);
+                    font-size: 12px;
+                }
+                .trade-list-item:last-child { border-bottom: none; }
+            </style>
 </head>
 <body>
 
@@ -184,8 +225,16 @@
     </div>
     
     <!-- Canvas Chart -->
-    <canvas id="miniChart"></canvas>
-</div>
+        <canvas id="miniChart"></canvas>
+    </div>
+
+    <div class="trades-popup" id="tradesPopup">
+        <div class="trades-popup-header">
+            <span>Active Trades</span>
+            <button class="trades-popup-close" onclick="toggleTradesPopup()">✕</button>
+        </div>
+        <div id="tradesListContent">No active trades.</div>
+    </div>
 
 <!-- Bottom Dock UI -->
 <div class="bottom-area">
