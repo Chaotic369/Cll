@@ -333,43 +333,43 @@
         // Trades popup state
         let popupOpen = false;
 
-    async function getAccountId() {
-        const res = await fetch(`${API_BASE}/trading/v1/options/accounts`, {
-            method: 'GET',
-            headers: { 'Deriv-App-ID': APP_ID, 'Authorization': `Bearer ${TOKEN}` }
-        });
-        const json = await res.json();
-        const accounts = Array.isArray(json.data) ? json.data : [];
-        const targetAccount = accounts.find(acct => isDemoAcc ? acct.account_type === "demo" : acct.account_type !== "demo");
-        if (!targetAccount) throw new Error("Account not found");
-        return targetAccount.account_id;
-    }
-
-    async function getWsUrl(accountId) {
-        const res = await fetch(`${API_BASE}/trading/v1/options/accounts/${accountId}/otp`, {
-            method: 'POST',
-            headers: { 'Deriv-App-ID': APP_ID, 'Authorization': `Bearer ${TOKEN}` }
-        });
-        const json = await res.json();
-        return json.data.url;
-    }
-
     async function connectAPI() {
-        try {
-            document.getElementById('live-price').innerText = "Connecting...";
-            const accountId = await getAccountId();
-            const wsUrl = await getWsUrl(accountId);
+            try {
+                document.getElementById('live-price').innerText = "Connecting...";
+            
+                // Deriv uses direct WebSockets, not REST APIs.
+                // Defaulting to 1089 (standard app ID) if the provided one is invalid.
+                const appId = isNaN(APP_ID) ? 1089 : APP_ID;
+                ws = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
 
-            ws = new WebSocket(wsUrl);
-            ws.onopen = () => {
-                ws.send(JSON.stringify({ ticks_history: "frxXAUUSD", end: "latest", count: 1000, style: "ticks", subscribe: 1 }));
-                ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-            };
+                ws.onopen = () => {
+                    if (TOKEN && TOKEN.trim() !== "") {
+                        ws.send(JSON.stringify({ authorize: TOKEN }));
+                    } else {
+                        // Fallback if no token is provided
+                        ws.send(JSON.stringify({ ticks_history: "frxXAUUSD", end: "latest", count: 1000, style: "ticks", subscribe: 1 }));
+                    }
+                };
 
-            ws.onmessage = (msg) => {
-                const data = JSON.parse(msg.data);
+                ws.onmessage = (msg) => {
+                    const data = JSON.parse(msg.data);
+
+                    if (data.error) {
+                        console.error("API Error:", data.error.message);
+                        if (data.error.code === 'InvalidToken') {
+                            document.getElementById('live-price').innerText = "Invalid Token - Chart Only";
+                            // Fallback to fetch chart data even if token fails
+                            ws.send(JSON.stringify({ ticks_history: "frxXAUUSD", end: "latest", count: 1000, style: "ticks", subscribe: 1 }));
+                        }
+                        return;
+                    }
+
+                    if (data.msg_type === 'authorize') {
+                        ws.send(JSON.stringify({ ticks_history: "frxXAUUSD", end: "latest", count: 1000, style: "ticks", subscribe: 1 }));
+                        ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+                    }
                 
-                if (data.history) {
+                    if (data.history) {
                     const times = data.history.times;
                     const prices = data.history.prices;
                     for (let i = 0; i < times.length; i++) tickHistory.push({ time: times[i], price: prices[i] });
